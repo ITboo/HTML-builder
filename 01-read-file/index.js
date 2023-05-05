@@ -1,19 +1,30 @@
-import { readFile } from 'fs/promises';
+import { createReadStream } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { errorMsg } from '../constants/messages.js';
 
-const read = async () => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const filePath = path.join(__dirname, 'text.txt');
 
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const filePath = path.join(__dirname, 'text.txt');
+const readFile = async () => {
+    return new Promise((resolve, reject) => {
+        const readStream = createReadStream(filePath);
 
-    const fileContent = await readFile(filePath, 'utf-8')
-        .catch(() => {
-            throw new Error(errorMsg)
+        readStream.on('data', (chunk) => {
+            process.stdout.write(chunk);
         });
-    console.log(fileContent);
+
+        readStream.on('end', () => {
+            resolve();
+        });
+
+        readStream.on('error', (error) => {
+            reject(error);
+            console.log(errorMsg)
+        });
+    });
+
 };
 
-await read();
+await readFile();
