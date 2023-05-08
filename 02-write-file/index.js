@@ -1,28 +1,35 @@
 import { createWriteStream } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { stdin } from 'process';
+import { stdin, stdout, exit } from 'process';
 import { errorMsg } from '../constants/messages.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const filePath = path.join(__dirname, 'new.txt');
+
 const write = async () => {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const filePath = path.join(__dirname, 'new.txt');
-
     const writeStream = createWriteStream(filePath);
-
-    console.log("Welcome to your new file. Feel free to put anything to it");
+    stdout.write('Welcome to your new file. Feel free to put anything to it\n');
 
     stdin.pipe(writeStream);
-
-    writeStream.on('error', (error) => {
-        throw error (errorMsg);
+    stdin.on('data', data => {
+        if(!data.toString().trim() === 'exit') {
+            stdout.write(`Added to new file: ${data}`);
+          }
+        if(data.toString().trim() === 'exit') {
+            stdout.write('Thank you. Bye!')
+            exit()
+          }
+    })
+    stdin.on('error', (error) => {
+        throw new Error(errorMsg);
     })
 
-   /* writeStream.on('exit', () => {
-        stdin.
-        console.log('Thank you. Bye!');
-    })*/
+    process.on('SIGINT', () => {
+        stdout.write('Thank you. Bye!');
+        exit();
+    });
 
 };
 
